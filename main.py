@@ -8,8 +8,6 @@ pp = pprint.PrettyPrinter(indent=4)
 
 app = Flask(__name__)
 
-app.secret_key = rand(24)
-
 # Thank you based StackOverflow
 def cleanup_string(text):
     text = text.encode("ascii", "replace").decode()
@@ -26,7 +24,13 @@ def mysql_do(query):
     db.close()
     return data
 
-userdb = mysql_do("SELECT * FROM Users")
+def app_init():
+    mysql_do("CREATE TABLE IF NOT EXISTS Users ( uid INT NOT NULL AUTO_INCREMENT PRIMARY KEY, user VARCHAR(255) NOT NULL, realname VARCHAR(255) NOT NULL, password VARCHAR(255), isadmin BIT );")
+    mysql_do("CREATE TABLE IF NOT EXISTS Quotes ( id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, quote VARCHAR(2048) NOT NULL, date VARCHAR(255) NOT NULL, user INT NOT NULL, context VARCHAR(8000), FOREIGN KEY (user) REFERENCES Users(uid) );")
+    app.secret_key = rand(24)
+    global userdb
+    userdb = mysql_do("SELECT * FROM Users")
+
 
 @app.route("/")
 def index():
@@ -109,4 +113,5 @@ def utility_processor():
     return dict(uid_to_user=uid_to_user)
 
 if __name__ == "__main__":
+    app_init()
     app.run(host="0.0.0.0", debug=True)
