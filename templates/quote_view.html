@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+
+{% block head %}
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.10.13/css/dataTables.bootstrap.min.css">
+  <script src="https://cdn.datatables.net/1.10.13/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.10.13/js/dataTables.bootstrap.min.js"></script>
+  <script type="text/javascript" class="init">
+  $(document).ready(function() {
+    $('#QuoteTable').DataTable( {
+        "order": [[ 0,"desc" ]],
+        "lengthMenu": [[ 10, 25, 50, 100, -1 ], [ 10, 25, 50, 100, "All" ]],
+        "pagingType": "full_numbers",
+        "stateSave": true
+    } );
+  } );
+  </script>
+{% endblock %}
+
+{% block body %}
+  <div class="table-responsive">
+    <table class="table table-hover table-bordered" id="QuoteTable">
+      <thead>
+        <tr>
+          <th>Date Added</th>
+          <th>User</th>
+          <th>Quote</th>
+          <th>Context</th>
+        </tr>
+      </thead>
+      <tbody>
+  {% for entry in data %}
+        <tr>
+          <td>{{ "{:%Y/%m/%d %H:%M:%S}".format(entry[2]) }}</td>
+          <td>{{ uid_to_user(entry[3]) }}</td>
+          <td>{{ entry[1] }}</td>
+          <td>{{ entry[4] }}</td>
+        </tr>
+  {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

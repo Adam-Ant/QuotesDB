@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+{% block body %}
+<h1> Add new Quote </h1>
+<form method="post">
+  <div class="form-group">
+    <label for="quote">Quote:</label>
+    <textarea rows="3" maxlength="500" class="form-control" id="quote" name="quote" ></textarea>
+    <span class="help-block">Required</span>
+  </div>
+  <div class="form-group">
+    <label for="context">Context:</label>
+    <textarea rows="3" maxlength="500" class="form-control" id="context" name="context" ></textarea>
+  </div>
+  <div class="form-group">
+    <label for="user">User:</label>
+    <select class="form-control" id="user" name="user">
+{% for user in users %}
+      <option value="{{ user[0] }}">{{ user[1] }}</option>
+{% endfor %}
+    </select>
+    <span class="help-block">User not listed? Add one <a href="https://www.youtube.com/watch?v=woySeSNBL3o">here</a></span>
+  </div>
+  <div class="form-group">
+      <button type="submit" class="btn btn-primary">Submit</button>
+  </div>
+
+</form>
+{% endblock %}

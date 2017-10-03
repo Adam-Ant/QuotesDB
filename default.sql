@@ -1,0 +1,16 @@
+CREATE TABLE Users (
+  uid int NOT NULL AUTO_INCREMENT PRIMARY KEY, 
+  user varchar(255) NOT NULL, 
+  realname  varchar(255) NOT NULL
+);
+
+CREATE TABLE Quotes (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  quote VARCHAR(2048) NOT NULL,
+  date VARCHAR(255) NOT NULL,
+  user INT NOT NULL,
+  context VARCHAR(8000),
+  FOREIGN KEY (user) REFERENCES Users(uid)
+);
+  
+
