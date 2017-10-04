@@ -81,6 +81,11 @@ def login():
 @app.route("/addquote", methods=['GET','POST'])
 def addquote():
     if request.method == "POST":
+        try:
+            session['username']
+        except KeyError:
+            flash("INFO: Please login first.","info")
+            return redirect(url_for("login"))
 
         quotein = pymysql.escape_string(request.form['quote'])
         contextin = pymysql.escape_string(request.form['context'])
