@@ -1,17 +1,22 @@
 from os import urandom as rand
-from flaskext.mysql import MySQL
+#from flaskext.mysql import MySQL
 import pymysql
 from flask import Flask, render_template, session, redirect, url_for, request, flash
+from passlib.context import CryptContext
 import pprint
 
 pp = pprint.PrettyPrinter(indent=4)
 
+pass_ctx = CryptContext(["bcrypt_sha256"])
 app = Flask(__name__)
 
 # Thank you based StackOverflow
+# Remove Trailing and leading whitespace, strip unicode
 def cleanup_string(text):
     text = text.encode("ascii", "replace").decode()
     return text.strip() 
+
+
 
 # Load User Table into variable
 def mysql_do(query):
@@ -25,11 +30,35 @@ def mysql_do(query):
     return data
 
 def app_init():
-    mysql_do("CREATE TABLE IF NOT EXISTS Users ( uid INT NOT NULL AUTO_INCREMENT PRIMARY KEY, user VARCHAR(255) NOT NULL, realname VARCHAR(255) NOT NULL, password VARCHAR(255), isadmin BIT );")
+    # Check to make sure tables are set up properly
+    mysql_do("CREATE TABLE IF NOT EXISTS Users ( uid INT NOT NULL AUTO_INCREMENT PRIMARY KEY, user VARCHAR(255) NOT NULL UNIQUE, realname VARCHAR(255) NOT NULL, password VARCHAR(255), isadmin BIT NOT NULL);")
     mysql_do("CREATE TABLE IF NOT EXISTS Quotes ( id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, quote VARCHAR(2048) NOT NULL, date VARCHAR(255) NOT NULL, user INT NOT NULL, context VARCHAR(8000), FOREIGN KEY (user) REFERENCES Users(uid) );")
+
+    # Generate random key for session cookies
     app.secret_key = rand(24)
+
+    # TODO: Replace this with something dynamic where needed
     global userdb
     userdb = mysql_do("SELECT * FROM Users")
+
+
+def do_user_login(user, password):
+    try:
+        userdata = mysql_do("SELECT * FROM Users WHERE user='%s'" % (user))[0]
+    except IndexError:
+        # Returned when no rows found - no user with that name
+        flash( "Error: Incorrect Username or Password!", "danger")
+        return redirect(url_for('login'))
+
+    if pass_ctx.verify(password, userdata[3]):
+        session['username'] = user
+        session['uid'] = userdata[0]
+        session['isAdmin'] = bool(ord(userdata[4])) 
+        return redirect(url_for('index'))
+
+    else:
+        flash( "Error: Incorrect Username or Password!", "danger")
+        return redirect(url_for('login'))
 
 
 @app.route("/")
@@ -42,6 +71,12 @@ def index():
 def quoutepage():
     retdata = mysql_do("SELECT * FROM Quotes ORDER BY ID DESC")
     return render_template("quote_view.html", data=retdata)
+
+@app.route("/login", methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        return do_user_login(request.form['username'], request.form['pw'])
+    return render_template("login.html")
 
 @app.route("/addquote", methods=['GET','POST'])
 def addquote():
@@ -90,14 +125,15 @@ def addquote():
         mysql_do(sql)
         flash("Success! The entry was added to the database.","success")
         return redirect(url_for('index'))
+
+    # Check if the user is authenticated
+    try:
+        session['username']
+    except KeyError:
+        flash("INFO: Please login first.","info")
+        return redirect(url_for("login"))
     return render_template("add_quote.html", users=userdb)
 
-@app.route("/login", methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        session['username'] = request.form['username']
-        return redirect(url_for('index'))
-    return render_template("login.html")
 
 @app.route("/logout")
 def logout():

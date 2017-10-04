@@ -1,9 +1,9 @@
 CREATE TABLE Users (
   uid INT NOT NULL AUTO_INCREMENT PRIMARY KEY, 
-  user VARCHAR(255) NOT NULL, 
+  user VARCHAR(255) NOT NULL UNIQUE, 
   realname  VARCHAR(255) NOT NULL,
   password VARCHAR(255),
-  isadmin BIT
+  isadmin BIT NOT NULL 
 );
 
 CREATE TABLE Quotes (
