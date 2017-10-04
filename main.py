@@ -32,7 +32,7 @@ def mysql_do(query):
 def app_init():
     # Check to make sure tables are set up properly
     mysql_do("CREATE TABLE IF NOT EXISTS Users ( uid INT NOT NULL AUTO_INCREMENT PRIMARY KEY, user VARCHAR(255) NOT NULL UNIQUE, realname VARCHAR(255) NOT NULL, password VARCHAR(255), isadmin BIT NOT NULL);")
-    mysql_do("CREATE TABLE IF NOT EXISTS Quotes ( id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, quote VARCHAR(2048) NOT NULL, date VARCHAR(255) NOT NULL, user INT NOT NULL, context VARCHAR(8000), FOREIGN KEY (user) REFERENCES Users(uid) );")
+    mysql_do("CREATE TABLE IF NOT EXISTS Quotes ( id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, quote VARCHAR(2048) NOT NULL, date VARCHAR(255) NOT NULL, user INT NOT NULL, context VARCHAR(8000), addedby INT NOT NULL, FOREIGN KEY (user) REFERENCES Users(uid) );")
 
     # Generate random key for session cookies
     app.secret_key = rand(24)
@@ -120,7 +120,7 @@ def addquote():
                 
         
         
-        sql = "INSERT INTO `Quotes` (`id`, `quote`, `date`, `user`, `context`) VALUES (NULL, '%s', CURRENT_TIMESTAMP, %d, %s);" % (quotein, userin, contextin)
+        sql = "INSERT INTO `Quotes` (`id`, `quote`, `date`, `user`, `context`, `addedby`) VALUES (NULL, '%s', CURRENT_TIMESTAMP, %d, %s, %s);" % (quotein, userin, contextin, session['uid'])
         print(sql)
         mysql_do(sql)
         flash("Success! The entry was added to the database.","success")

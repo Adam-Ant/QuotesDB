@@ -12,6 +12,7 @@ CREATE TABLE Quotes (
   date VARCHAR(255) NOT NULL,
   user INT NOT NULL,
   context VARCHAR(8000),
+  addedby INT NOT NULL,
   FOREIGN KEY (user) REFERENCES Users(uid)
 );
   
