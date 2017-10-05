@@ -1,7 +1,7 @@
 from os import urandom as rand
 #from flaskext.mysql import MySQL
 import pymysql
-from flask import Flask, render_template, session, redirect, url_for, request, flash
+from flask import Flask, render_template, session, redirect, url_for, request, flash, abort
 from passlib.context import CryptContext
 import pprint
 
@@ -93,7 +93,35 @@ def index():
 @app.route("/quotes")
 def quoutepage():
     retdata = mysql_do("SELECT * FROM Quotes ORDER BY ID DESC")
-    return gen_page("quote_view.html", retdata)
+    try:
+        isAdmin = session['isAdmin']
+    except KeyError:
+        isAdmin = False
+    return gen_page("quote_view.html", [retdata, isAdmin])
+
+@app.route("/deletequote")
+def deletequoute():
+    try:
+        if session['isAdmin']:
+            del_id = request.args.get('id', type=int)
+            if not del_id:
+                abort(400)
+
+            #Check the record exists
+            try:
+                mysql_do("SELECT * FROM Quotes WHERE id=%d" % (del_id))[0]
+            except IndexError:
+                abort(400)
+
+            mysql_do("DELETE FROM Quotes WHERE id=%d;" % (del_id))
+            flash("INFO: Quote Deleted", "success")
+            return redirect(request.referrer or url_for("index"))
+        else:
+            abort(403)
+    except KeyError:
+        abort(403)
+
+
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
@@ -208,6 +236,7 @@ def addquote():
 @app.context_processor
 def utility_processor():
     def uid_to_user(uid):
+        # This probably needs optimizing
         for user in userdb:
             if user[0] == uid:
                 return user[1]

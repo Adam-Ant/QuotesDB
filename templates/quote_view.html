@@ -25,15 +25,23 @@
           <th>User</th>
           <th>Quote</th>
           <th>Context</th>
+          {% if data[1] %}
+          <th>Added By:</th>
+          <th><span class="glyphicon glyphicon-trash"></span></th>
+          {% endif %}
         </tr>
       </thead>
       <tbody>
-  {% for entry in data %}
+  {% for entry in data[0] %}
         <tr>
-          <td>{{ "{:%Y/%m/%d %H:%M:%S}".format(entry[2]) }}</td>
+          <td><a href="/">{{ entry[2] }}</a></td>
           <td>{{ uid_to_user(entry[3]) }}</td>
           <td>{{ entry[1] }}</td>
           <td>{{ entry[4] }}</td>
+          {% if data[1] %}
+          <td>{{ uid_to_user(entry[5]) }}</td>
+          <td><a href="/deletequote?id={{ entry[0] }}" class="btn btn-danger"role="button" ><span class="glyphicon glyphicon-trash"></span></a></td>
+          {% endif %}
         </tr>
   {% endfor %}
       </tbody>
