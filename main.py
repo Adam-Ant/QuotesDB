@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 from os import urandom as rand
 from os.path import isdir as isdir
 from os.path import isfile as isfile

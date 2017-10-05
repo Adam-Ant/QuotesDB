@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import pymysql
 import getpass
 import sys
