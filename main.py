@@ -101,6 +101,49 @@ def login():
         return do_user_login(request.form['username'], request.form['pw'])
     return gen_page("login.html")
 
+@app.route("/logout")
+def logout():
+    session.pop('username',None)
+    return redirect(url_for('index'))
+
+@app.route("/resetpass", methods=["GET","POST"])
+def pwreset():
+    if request.method == "POST":
+        try:
+            session['username']
+        except KeyError:
+            flash("INFO: Please login first.","info")
+            return redirect(url_for("login"))
+
+        if request.form['pw'] != request.form['pw_verify']:
+            flash ("Error: New Passwords do not match!","danger")
+            return redirect(url_for("pwreset"))
+
+        try:
+            userdata = mysql_do("SELECT * FROM Users WHERE user='%s'" % (session['username']))[0]
+        except IndexError:
+            # Returned when no rows found - no user with that name
+            flash( "Error: Internal server error - user not found", "danger")
+            return redirect(url_for('index'))
+
+        if not pass_ctx.verify(request.form['current_passwd'], userdata[3]):
+            flash ("Error: Current password is incorrect", "danger")
+            return redirect(url_for("pwreset"))
+
+        mysql_do("UPDATE Users SET password=\"%s\" WHERE uid=%d;" % (pymysql.escape_string(pass_ctx.hash(request.form['pw'])), session['uid']))
+
+
+        flash("INFO: Password updated successfully!", "success")
+        return redirect(url_for("index"))
+
+    # Check if the user is authenticated
+    try:
+        session['username']
+    except KeyError:
+        flash("INFO: Please login first.","info")
+        return redirect(url_for("login"))
+    return gen_page("passwd_reset.html")
+
 @app.route("/addquote", methods=['GET','POST'])
 def addquote():
     if request.method == "POST":
@@ -161,12 +204,6 @@ def addquote():
         flash("INFO: Please login first.","info")
         return redirect(url_for("login"))
     return gen_page("add_quote.html", get_userdb())
-
-
-@app.route("/logout")
-def logout():
-    session.pop('username',None)
-    return redirect(url_for('index'))
 
 @app.context_processor
 def utility_processor():
