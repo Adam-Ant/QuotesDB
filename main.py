@@ -14,7 +14,7 @@ app = Flask(__name__)
 # Remove Trailing and leading whitespace, strip unicode
 def cleanup_string(text):
     text = text.encode("ascii", "replace").decode()
-    return text.strip() 
+    return text.strip()
 
 def get_userdb():
     global userdb
@@ -78,7 +78,7 @@ def do_user_login(user, password):
     if pass_ctx.verify(password, userdata[3]):
         session['username'] = user
         session['uid'] = userdata[0]
-        session['isAdmin'] = bool(ord(userdata[4])) 
+        session['isAdmin'] = bool(ord(userdata[4]))
         return redirect(url_for('index'))
 
     else:
@@ -156,8 +156,8 @@ def addquote():
         quotein = pymysql.escape_string(request.form['quote'])
         contextin = pymysql.escape_string(request.form['context'])
         userin = pymysql.escape_string(request.form['user'])
-        
-        
+
+
         #Remove Trailing and leading whitespace, strip unicode
         quotein = cleanup_string(quotein)
         contextin = cleanup_string(contextin)
@@ -170,27 +170,27 @@ def addquote():
         if (len(quotein) > 500) or (len(contextin) > 500):
             flash("Error: Quote too long. Stop fucking with the code :P","danger")
             return redirect(url_for("addquote"))
-       
+
        # This checks if the user value has been changed to a non integer
         try:
             userin = int(userin)
         except:
             flash("Error: Invalid userID. Stop fucking with the code :P","danger")
             return redirect(url_for("addquote"))
-        
+
         # Check if the value is out of range of the valid uid's
         if (userin > int(userdb[-1][0]) or (userin <= 0)):
             flash("Error: Invalid userID. Stop fucking with the code :P","danger")
             return redirect(url_for("addquote"))
-            
-        
+
+
         if not contextin:
             contextin = "NULL"
         else:
             contextin = "\'" + contextin + "\'"
-                
-        
-        
+
+
+
         sql = "INSERT INTO `Quotes` (`id`, `quote`, `date`, `user`, `context`, `addedby`) VALUES (NULL, '%s', CURRENT_TIMESTAMP, %d, %s, %s);" % (quotein, userin, contextin, session['uid'])
         print(sql)
         mysql_do(sql)
