@@ -16,6 +16,17 @@ def cleanup_string(text):
     text = text.encode("ascii", "replace").decode()
     return text.strip() 
 
+def get_userdb():
+    global userdb
+    global numusers
+
+    # Counting on primary key is quickest operation
+    cur_num = mysql_do("SELECT count(`uid`) FROM `Users`;")[0][0]
+
+    if numusers < cur_num:
+        # Update the database!
+        userdb = mysql_do("SELECT * FROM Users")
+    return userdb
 
 
 # Load User Table into variable
@@ -37,9 +48,10 @@ def app_init():
     # Generate random key for session cookies
     app.secret_key = rand(24)
 
-    # TODO: Replace this with something dynamic where needed
-    global userdb
-    userdb = mysql_do("SELECT * FROM Users")
+    # Init the counter, then run a query
+    global numusers
+    numusers = 0
+    get_userdb()
 
 
 def do_user_login(user, password):
@@ -137,7 +149,7 @@ def addquote():
     except KeyError:
         flash("INFO: Please login first.","info")
         return redirect(url_for("login"))
-    return render_template("add_quote.html", users=userdb)
+    return render_template("add_quote.html", users=get_userdb())
 
 
 @app.route("/logout")
