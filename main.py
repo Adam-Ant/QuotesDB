@@ -1,14 +1,28 @@
 from os import urandom as rand
-#from flaskext.mysql import MySQL
+from os.path import isdir as isdir
+from os.path import isfile as isfile
 import pymysql
 from flask import Flask, render_template, session, redirect, url_for, request, flash, abort
 from passlib.context import CryptContext
-import pprint
+import configparser
+import argparse
 
-pp = pprint.PrettyPrinter(indent=4)
 
 pass_ctx = CryptContext(["bcrypt_sha256"])
 app = Flask(__name__)
+
+defaultconfig = '''[connection]
+# IP or Hostname of the MySQL server (Default: 127.0.0.1)
+#hostname = 127.0.0.1
+# Port of the MySQL server (Default: 3306)
+#port = 3306
+# Username of the database user (Default: root)
+#username = root
+# Password of the database user
+password = 
+# Database to use for the application (Default: QuoteDB)
+#database = QuoteDB
+'''
 
 # Thank you based StackOverflow
 # Remove Trailing and leading whitespace, strip unicode
@@ -31,8 +45,6 @@ def get_userdb():
 def gen_page(template, data=None):
     # This fire if we need to pass something into templating
     if data:
-        print("DATA")
-        pp.pprint(data)
         if 'username' in session:
             return render_template(template, user=session["uid"], data=data)
         else:
@@ -44,7 +56,7 @@ def gen_page(template, data=None):
 
 # Load User Table into variable
 def mysql_do(query):
-    db = pymysql.connect(host='dockerdev', port=3306, user='root', passwd='development', db='QuoteDB')
+    db = pymysql.connect(host=dbhost, port=dbport, user=dbuser, passwd=dbpass, db=dbname)
     cur = db.cursor()
     cur.execute(query)
     data = cur.fetchall()
@@ -220,7 +232,6 @@ def addquote():
 
 
         sql = "INSERT INTO `Quotes` (`id`, `quote`, `date`, `user`, `context`, `addedby`) VALUES (NULL, '%s', CURRENT_TIMESTAMP, %d, %s, %s);" % (quotein, userin, contextin, session['uid'])
-        print(sql)
         mysql_do(sql)
         flash("Success! The entry was added to the database.","success")
         return redirect(url_for('index'))
@@ -243,5 +254,38 @@ def utility_processor():
     return dict(uid_to_user=uid_to_user)
 
 if __name__ == "__main__":
+    argparser = argparse.ArgumentParser(prog='QuoteDB',description='Web app for tracking silly quotes.')
+    argparser.add_argument('-c','--config',help='Specify directory for config file')
+    cmdargs = argparser.parse_args()
+
+    if not (cmdargs.config):
+        filepath = '.'
+    else:
+        filepath = cmdargs.config
+
+    if not (isdir(filepath)):
+        print('Error: Config directory does not exist. Exiting...')
+        exit(1)
+
+    if not (isfile(filepath + '/quotedb.cfg')):
+        print('Warn: Config file does not exist, writing example config. Please configure and try again.')
+        c = open(filepath + '/quotedb.cfg', 'w')
+        c.write(defaultconfig)
+        c.close()
+        exit(1)
+
+    config = configparser.ConfigParser()
+    config.read(filepath + '/quotedb.cfg')
+
+    dbhost = config['connection'].get('hostname', '127.0.0.1')
+    dbport = config['connection'].getint('port', 3306)
+    dbuser = config['connection'].get('username', 'root')
+    dbpass = config['connection'].get('password')
+    dbname = config['connection'].get('database', 'QuoteDB')
+
+    if dbpass == '':
+        print("Error! Could not read config file. Please ensure it exists and is readable, and retry")
+        exit(1)
+
     app_init()
     app.run(host="0.0.0.0", debug=True)
