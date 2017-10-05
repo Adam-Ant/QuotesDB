@@ -34,12 +34,12 @@ def gen_page(template, data=None):
         print("DATA")
         pp.pprint(data)
         if 'username' in session:
-            return render_template(template, user=session["username"], data=data)
+            return render_template(template, user=session["uid"], data=data)
         else:
             return render_template(template, data=data)
 
     if 'username' in session:
-        return render_template(template, user=session["username"])
+        return render_template(template, user=session["uid"])
     return render_template(template)
 
 # Load User Table into variable
@@ -239,7 +239,7 @@ def utility_processor():
         # This probably needs optimizing
         for user in userdb:
             if user[0] == uid:
-                return user[1]
+                return "%s (%s)" % (user[1], user[2])
     return dict(uid_to_user=uid_to_user)
 
 if __name__ == "__main__":
