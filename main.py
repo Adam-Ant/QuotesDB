@@ -28,6 +28,19 @@ def get_userdb():
         userdb = mysql_do("SELECT * FROM Users")
     return userdb
 
+def gen_page(template, data=None):
+    # This fire if we need to pass something into templating
+    if data:
+        print("DATA")
+        pp.pprint(data)
+        if 'username' in session:
+            return render_template(template, user=session["username"], data=data)
+        else:
+            return render_template(template, data=data)
+
+    if 'username' in session:
+        return render_template(template, user=session["username"])
+    return render_template(template)
 
 # Load User Table into variable
 def mysql_do(query):
@@ -75,20 +88,18 @@ def do_user_login(user, password):
 
 @app.route("/")
 def index():
-    if 'username' in session:
-        return render_template("index.html", user=session["username"])
-    return render_template("index.html")
+    return gen_page("index.html")
 
 @app.route("/quotes")
 def quoutepage():
     retdata = mysql_do("SELECT * FROM Quotes ORDER BY ID DESC")
-    return render_template("quote_view.html", data=retdata)
+    return gen_page("quote_view.html", retdata)
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         return do_user_login(request.form['username'], request.form['pw'])
-    return render_template("login.html")
+    return gen_page("login.html")
 
 @app.route("/addquote", methods=['GET','POST'])
 def addquote():
@@ -149,7 +160,7 @@ def addquote():
     except KeyError:
         flash("INFO: Please login first.","info")
         return redirect(url_for("login"))
-    return render_template("add_quote.html", users=get_userdb())
+    return gen_page("add_quote.html", get_userdb())
 
 
 @app.route("/logout")
