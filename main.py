@@ -316,4 +316,4 @@ if __name__ == "__main__":
         exit(1)
 
     app_init()
-    app.run(host="0.0.0.0", debug=True)
+    app.run(host="0.0.0.0")
