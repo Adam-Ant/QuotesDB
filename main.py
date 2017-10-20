@@ -6,6 +6,7 @@ from os.path import isfile as isfile
 import pymysql
 from flask import Flask, render_template, session, redirect, url_for, request, flash, abort
 from passlib.context import CryptContext
+import urllib.request
 import configparser
 import argparse
 
@@ -24,6 +25,14 @@ defaultconfig = '''[connection]
 password = 
 # Database to use for the application (Default: QuoteDB)
 #database = QuoteDB
+
+[telegram]
+# Enable the telegram notifier, sends a message to a specific telegram chat (Default: False)
+#enabled = True
+# API Token of the Bot
+#token =
+# ID of the User/Group to message
+#id=
 '''
 
 # Thank you based StackOverflow
@@ -102,6 +111,7 @@ def do_user_login(user, password):
 
 @app.route("/")
 def index():
+    print()
     return gen_page("index.html")
 
 @app.route("/quotes")
@@ -231,6 +241,12 @@ def addquote():
         else:
             contextin = "\'" + contextin + "\'"
 
+        if telegramEnabled:
+            try:
+                with urllib.request.urlopen('https://api.telegram.org/bot%s/sendmessage?parse_mode=Markdown&chat_id=%i&text=*%s just added a quote to the database:*%%0A %s - _%s_' % (telegramToken, telegramChatid, session['username'], quotein, utility_processor()['uid_to_user'](userin))) as urlreq:
+                    urlreq.read()
+            except urllib.error.HTTPError:
+                print("Warning: Telegram notify error!")
 
 
         sql = "INSERT INTO `Quotes` (`id`, `quote`, `date`, `user`, `context`, `addedby`) VALUES (NULL, '%s', CURRENT_TIMESTAMP, %d, %s, %s);" % (quotein, userin, contextin, session['uid'])
@@ -284,6 +300,16 @@ if __name__ == "__main__":
     dbuser = config['connection'].get('username', 'root')
     dbpass = config['connection'].get('password')
     dbname = config['connection'].get('database', 'QuoteDB')
+
+    telegramEnabled = config['telegram'].getboolean('enabled', False)
+
+    if telegramEnabled:
+        telegramToken = config['telegram'].get('token')
+        telegramChatid = config['telegram'].getint('id')
+
+    if telegramEnabled and ((telegramToken == '') or (telegramChatid == '')):
+        print("Error! Telegram enabled but token or chat ID not set. Please check your config and retry")
+        exit(1)
 
     if dbpass == '':
         print("Error! Could not read config file. Please ensure it exists and is readable, and retry")
