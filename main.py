@@ -243,7 +243,7 @@ def addquote():
 
         if telegramEnabled:
             try:
-                with urllib.request.urlopen('https://api.telegram.org/bot%s/sendmessage?parse_mode=Markdown&chat_id=%i&text=*%s just added a quote to the database:*%%0A %s - _%s_' % (telegramToken, telegramChatid, session['username'], quotein, utility_processor()['uid_to_user'](userin))) as urlreq:
+                with urllib.request.urlopen('https://api.telegram.org/bot%s/sendmessage?parse_mode=Markdown&chat_id=%i&text=*%s just added a quote to the database:*%%0A %s - _%s_' % (telegramToken, telegramChatid, session['username'], cleanup_string(request.form['quote']), utility_processor()['uid_to_user'](userin))) as urlreq:
                     urlreq.read()
             except urllib.error.HTTPError:
                 print("Warning: Telegram notify error!")
